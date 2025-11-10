@@ -1,0 +1,2 @@
+# MonopolyCalc
+Monopoly Score Calculator
