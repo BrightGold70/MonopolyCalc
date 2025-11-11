@@ -1,7 +1,13 @@
 import Foundation
+import SwiftData
 
-enum PropertyGroup: String, CaseIterable, Identifiable {
-    case group1, group2, group3, group4, group5, group6, group7, group8, group9, group10
+@Model
+final class PropertyGroup {
+    @Attribute(.unique) var id: String
+    var name: String
 
-    var id: String { self.rawValue }
+    init(name: String) {
+        self.id = name
+        self.name = name
+    }
 }

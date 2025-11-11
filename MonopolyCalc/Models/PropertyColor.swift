@@ -1,19 +1,30 @@
+import Foundation
+import SwiftData
 import SwiftUI
 
-enum PropertyColor: String, CaseIterable, Identifiable {
-    case black, gray, brown, yellow, purple, blue, red
+@Model
+final class PropertyColor {
+    @Attribute(.unique) var id: String
+    var name: String
 
-    var id: String { self.rawValue }
+    init(name: String) {
+        self.id = name
+        self.name = name
+    }
 
     var color: Color {
-        switch self {
-        case .black: return .black
-        case .gray: return .gray
-        case .brown: return Color(red: 0.58, green: 0.33, blue: 0.21)
-        case .yellow: return .yellow
-        case .purple: return .purple
-        case .blue: return .blue
-        case .red: return .red
+        switch name {
+            case "brown": return Color(hex: "#955436")
+            case "lightBlue": return Color(hex: "#aae0fa")
+            case "pink": return Color(hex: "#d93a96")
+            case "orange": return Color(hex: "#f7941d")
+            case "red": return Color(hex: "#ed1c24")
+            case "yellow": return Color(hex: "#fef200")
+            case "green": return Color(hex: "#1fb25a")
+            case "blue": return Color(hex: "#0072bb")
+            case "black": return .black
+            case "gray": return .gray
+            default: return .primary
         }
     }
 }

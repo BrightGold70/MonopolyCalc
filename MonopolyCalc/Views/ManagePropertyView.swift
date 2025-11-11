@@ -1,17 +1,22 @@
 import SwiftUI
+import SwiftData
 
 struct ManagePropertyView: View {
     @ObservedObject var viewModel: GameViewModel
     @Environment(\.presentationMode) var presentationMode
+    @Environment(\.modelContext) private var modelContext
 
     var propertyToEdit: Property?
 
     @State private var name = ""
     @State private var originalValue: Double = 0
-    @State private var color = PropertyColor.brown
-    @State private var group = PropertyGroup.group1
+    @State private var color: PropertyColor?
+    @State private var group: PropertyGroup?
     @State private var costOfHouse: Double = 0
     @State private var costOfHotel: Double = 0
+
+    @Query private var colors: [PropertyColor]
+    @Query private var groups: [PropertyGroup]
 
     private let numberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -44,14 +49,16 @@ struct ManagePropertyView: View {
                     TextField("Name", text: $name)
                     TextField("Value", value: $originalValue, formatter: numberFormatter)
                         .keyboardType(.decimalPad)
+
                     Picker("Color", selection: $color) {
-                        ForEach(PropertyColor.allCases) { color in
-                            Text(color.rawValue.capitalized).tag(color)
+                        ForEach(colors) { color in
+                            Text(color.name.capitalized).tag(color as PropertyColor?)
                         }
                     }
+
                     Picker("Group", selection: $group) {
-                        ForEach(PropertyGroup.allCases) { group in
-                            Text(group.rawValue.capitalized).tag(group)
+                        ForEach(groups) { group in
+                            Text(group.name.capitalized).tag(group as PropertyGroup?)
                         }
                     }
                 }
@@ -65,6 +72,11 @@ struct ManagePropertyView: View {
 
                 Section {
                     Button("Save") {
+                        guard let color = color, let group = group else {
+                            // Handle the case where color or group is not selected
+                            return
+                        }
+
                         if var property = propertyToEdit {
                             // Property exists, update it
                             property.name = name
@@ -94,6 +106,10 @@ struct ManagePropertyView: View {
 
 struct ManagePropertyView_Previews: PreviewProvider {
     static var previews: some View {
-        ManagePropertyView(viewModel: GameViewModel(game: Game.sampleGame))
+        let modelContainer = try! ModelContainer(for: GameRecord.self, PlayerProfile.self, PropertySet.self)
+        let game = Game.sampleGame
+        let viewModel = GameViewModel(game: game, modelContext: modelContainer.mainContext)
+        ManagePropertyView(viewModel: viewModel)
+            .modelContainer(modelContainer)
     }
 }

@@ -1,12 +1,16 @@
 import Foundation
-import Combine
+import SwiftData
+import SwiftUI
 
+@MainActor
 class GameViewModel: ObservableObject, Hashable {
     let id = UUID()
     @Published var game: Game
+    private var modelContext: ModelContext
 
-    init(game: Game) {
+    init(game: Game, modelContext: ModelContext) {
         self.game = game
+        self.modelContext = modelContext
     }
 
     var allPropertiesWithOwnership: [Property] {
@@ -30,6 +34,12 @@ class GameViewModel: ObservableObject, Hashable {
         if let index = game.properties.firstIndex(where: { $0.id == property.id }) {
             game.properties[index] = property
         }
+    }
+
+    func saveGameRecord() {
+        let winner = calculateWinner()
+        let gameRecord = GameRecord(date: Date(), players: game.players, winner: winner)
+        modelContext.insert(gameRecord)
     }
 
     static func == (lhs: GameViewModel, rhs: GameViewModel) -> Bool {

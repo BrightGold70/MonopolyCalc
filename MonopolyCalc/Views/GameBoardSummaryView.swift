@@ -1,6 +1,8 @@
 import SwiftUI
+import SwiftData
 
 struct GameBoardSummaryView: View {
+    @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: GameViewModel
     @State private var searchText = ""
     @State private var showEndGameAlert = false
@@ -21,7 +23,7 @@ struct GameBoardSummaryView: View {
     }
 
     var groupedProperties: [PropertyGroup: [Property]] {
-        Dictionary(grouping: filteredAndSortedProperties, by: { $0.group })
+        Dictionary(grouping: filteredAndSortedProperties, by: { $0.group! })
     }
 
     var filteredAndSortedProperties: [Property] {
@@ -101,10 +103,10 @@ struct GameBoardSummaryView: View {
                     }
 
                     ScrollView {
-                        ForEach(groupedProperties.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { group in
+                        ForEach(groupedProperties.keys.sorted(by: { $0.name < $1.name }), id: \.self) { group in
                             VStack(alignment: .leading) {
                                 HStack {
-                                    Text(group.rawValue.capitalized)
+                                    Text(group.name.capitalized)
                                         .font(.title2)
                                         .fontWeight(.bold)
                                         .foregroundColor(.white)
@@ -180,6 +182,7 @@ struct GameBoardSummaryView: View {
                     title: Text("End Game"),
                     message: Text("Are you sure you want to end the game?"),
                     primaryButton: .destructive(Text("Confirm")) {
+                        viewModel.saveGameRecord()
                         navigationPath.append(viewModel)
                     },
                     secondaryButton: .cancel()
@@ -239,6 +242,10 @@ struct CapsuleButton: View {
 
 struct GameBoardSummaryView_Previews: PreviewProvider {
     static var previews: some View {
-        GameBoardSummaryView(viewModel: GameViewModel(game: Game.sampleGame))
+        let modelContainer = try! ModelContainer(for: GameRecord.self, PlayerProfile.self, PropertySet.self)
+        let game = Game.sampleGame
+        let viewModel = GameViewModel(game: game, modelContext: modelContainer.mainContext)
+        GameBoardSummaryView(viewModel: viewModel)
+            .modelContainer(modelContainer)
     }
 }

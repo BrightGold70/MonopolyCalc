@@ -36,6 +36,10 @@ struct PropertyDetailView: View {
 
 struct PropertyDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        PropertyDetailView(property: Game.sampleGame.properties[0], viewModel: GameViewModel(game: Game.sampleGame))
+        let modelContainer = try! ModelContainer(for: GameRecord.self, PlayerProfile.self, PropertySet.self)
+        let game = Game.sampleGame
+        let viewModel = GameViewModel(game: game, modelContext: modelContainer.mainContext)
+        PropertyDetailView(property: game.properties[0], viewModel: viewModel)
+            .modelContainer(modelContainer)
     }
 }

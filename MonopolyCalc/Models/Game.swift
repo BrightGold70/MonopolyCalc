@@ -1,9 +1,18 @@
 import Foundation
+import SwiftData
 
-struct Game {
+@Model
+final class Game {
     var players: [Player]
     var properties: [Property]
 
+    init(players: [Player], properties: [Property]) {
+        self.players = players
+        self.properties = properties
+    }
+}
+
+extension Game {
     static var sampleGame: Game {
         Game(players: [
             Player(name: "Player 1", money: 1500.0, properties: []),
