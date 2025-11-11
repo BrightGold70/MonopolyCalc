@@ -2,12 +2,11 @@ import SwiftUI
 
 struct PropertyRowView: View {
     let property: Property
-    let ownerName: String?
 
     var body: some View {
         HStack {
             HStack {
-                Image(systemName: property.color == .railroad ? "tram.fill" : (property.color == .utility ? "lightbulb.fill" : "house.fill"))
+                Image(systemName: "house.fill")
                     .foregroundColor(property.color.color)
                     .frame(width: 48, height: 48)
                     .background(property.color.color.opacity(0.2))
@@ -17,23 +16,18 @@ struct PropertyRowView: View {
                     Text(property.name)
                         .font(.headline)
                         .foregroundColor(.white)
-                    Text(ownerName ?? "Unowned")
+                    Text(property.isOwned ? "Owned" : "Unowned")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }
             }
             Spacer()
 
-            // Icons for houses, hotels, mortgage, monopoly
+            // Icons for houses, hotels, mortgage
             HStack {
                 if property.isMortgaged {
                     Image(systemName: "x.circle.fill")
                         .foregroundColor(.red)
-                }
-
-                if property.isMonopoly {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
                 }
 
                 if property.hotels > 0 {
@@ -55,7 +49,7 @@ struct PropertyRowView: View {
 
 struct PropertyRowView_Previews: PreviewProvider {
     static var previews: some View {
-        PropertyRowView(property: Property(name: "Mediterranean Avenue", value: 60, color: .brown, isMortgaged: true, houses: 3, rent: 2, houseCost: 50, hotelCost: 250, isMonopoly: true), ownerName: "Player 1")
+        PropertyRowView(property: Game.sampleGame.properties[0])
             .preferredColorScheme(.dark)
     }
 }

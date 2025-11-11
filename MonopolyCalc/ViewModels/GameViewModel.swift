@@ -9,8 +9,17 @@ class GameViewModel: ObservableObject, Hashable {
         self.game = game
     }
 
+    var allPropertiesWithOwnership: [Property] {
+        var properties = game.properties
+        for (index, property) in properties.enumerated() {
+            let isOwned = game.players.contains(where: { $0.properties.contains(where: { $0.id == property.id }) })
+            properties[index].isOwned = isOwned
+        }
+        return properties
+    }
+
     func calculateWinner() -> Player? {
-        game.players.max(by: { netWorth(for: $0) < netWorth(for: $1) })
+        game.players.max(by: { $0.netWorth < $1.netWorth })
     }
 
     func addProperty(_ property: Property) {
@@ -21,15 +30,6 @@ class GameViewModel: ObservableObject, Hashable {
         if let index = game.properties.firstIndex(where: { $0.id == property.id }) {
             game.properties[index] = property
         }
-    }
-
-    func netWorth(for player: Player) -> Int {
-        let propertiesValue = game.properties.filter { $0.ownerId == player.id }.reduce(0) { $0 + $1.value }
-        return player.cash + propertiesValue
-    }
-
-    func owner(for property: Property) -> Player? {
-        game.players.first(where: { $0.id == property.ownerId })
     }
 
     static func == (lhs: GameViewModel, rhs: GameViewModel) -> Bool {

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FilterView: View {
     @Binding var selectedFilter: GameBoardSummaryView.FilterType
-    @Binding var selectedColor: PropertyColor?
+    @Binding var selectedGroup: PropertyGroup?
 
     var body: some View {
         NavigationView {
@@ -12,14 +12,13 @@ struct FilterView: View {
                     Text("Owned").tag(GameBoardSummaryView.FilterType.owned)
                     Text("Unowned").tag(GameBoardSummaryView.FilterType.unowned)
                     Text("Mortgaged").tag(GameBoardSummaryView.FilterType.mortgaged)
-                    Text("Monopoly").tag(GameBoardSummaryView.FilterType.monopoly)
                 }
                 .pickerStyle(SegmentedPickerStyle())
 
-                Picker("Color", selection: $selectedColor) {
-                    Text("All Colors").tag(nil as PropertyColor?)
-                    ForEach(PropertyColor.allCases) { color in
-                        Text(color.rawValue.capitalized).tag(color as PropertyColor?)
+                Picker("Group", selection: $selectedGroup) {
+                    Text("All Groups").tag(nil as PropertyGroup?)
+                    ForEach(PropertyGroup.allCases) { group in
+                        Text(group.rawValue.capitalized).tag(group as PropertyGroup?)
                     }
                 }
             }

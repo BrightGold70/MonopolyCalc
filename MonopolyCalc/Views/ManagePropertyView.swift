@@ -7,11 +7,11 @@ struct ManagePropertyView: View {
     var propertyToEdit: Property?
 
     @State private var name = ""
-    @State private var value: Int = 0
+    @State private var originalValue: Double = 0
     @State private var color = PropertyColor.brown
-    @State private var rent: Int = 0
-    @State private var houseCost: Int = 0
-    @State private var hotelCost: Int = 0
+    @State private var group = PropertyGroup.group1
+    @State private var costOfHouse: Double = 0
+    @State private var costOfHotel: Double = 0
 
     private let numberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -25,11 +25,11 @@ struct ManagePropertyView: View {
 
         if let property = propertyToEdit {
             _name = State(initialValue: property.name)
-            _value = State(initialValue: property.value)
+            _originalValue = State(initialValue: property.originalValue)
             _color = State(initialValue: property.color)
-            _rent = State(initialValue: property.rent)
-            _houseCost = State(initialValue: property.houseCost)
-            _hotelCost = State(initialValue: property.hotelCost)
+            _group = State(initialValue: property.group)
+            _costOfHouse = State(initialValue: property.costOfHouse)
+            _costOfHotel = State(initialValue: property.costOfHotel)
         }
     }
 
@@ -42,40 +42,43 @@ struct ManagePropertyView: View {
             Form {
                 Section(header: Text("Property Details")) {
                     TextField("Name", text: $name)
-                    TextField("Value", value: $value, formatter: numberFormatter)
-                        .keyboardType(.numberPad)
+                    TextField("Value", value: $originalValue, formatter: numberFormatter)
+                        .keyboardType(.decimalPad)
                     Picker("Color", selection: $color) {
                         ForEach(PropertyColor.allCases) { color in
                             Text(color.rawValue.capitalized).tag(color)
                         }
                     }
+                    Picker("Group", selection: $group) {
+                        ForEach(PropertyGroup.allCases) { group in
+                            Text(group.rawValue.capitalized).tag(group)
+                        }
+                    }
                 }
 
-                Section(header: Text("Rent and Costs")) {
-                    TextField("Rent", value: $rent, formatter: numberFormatter)
-                        .keyboardType(.numberPad)
-                    TextField("House Cost", value: $houseCost, formatter: numberFormatter)
-                        .keyboardType(.numberPad)
-                    TextField("Hotel Cost", value: $hotelCost, formatter: numberFormatter)
-                        .keyboardType(.numberPad)
+                Section(header: Text("Costs")) {
+                    TextField("House Cost", value: $costOfHouse, formatter: numberFormatter)
+                        .keyboardType(.decimalPad)
+                    TextField("Hotel Cost", value: $costOfHotel, formatter: numberFormatter)
+                        .keyboardType(.decimalPad)
                 }
 
                 Section {
                     Button("Save") {
-                        var property = propertyToEdit ?? Property(name: name, value: value, color: color, rent: rent, houseCost: houseCost, hotelCost: hotelCost)
-                        property.name = name
-                        property.value = value
-                        property.color = color
-                        property.rent = rent
-                        property.houseCost = houseCost
-                        property.hotelCost = hotelCost
-
-                        if propertyToEdit == nil {
-                            viewModel.addProperty(property)
-                        } else {
+                        if var property = propertyToEdit {
+                            // Property exists, update it
+                            property.name = name
+                            property.originalValue = originalValue
+                            property.color = color
+                            property.group = group
+                            property.costOfHouse = costOfHouse
+                            property.costOfHotel = costOfHotel
                             viewModel.updateProperty(property)
+                        } else {
+                            // This is a new property
+                            let newProperty = Property(name: name, originalValue: originalValue, houses: 0, costOfHouse: costOfHouse, hotels: 0, costOfHotel: costOfHotel, isOwned: false, index: 0, color: color, group: group, bonus: 0, isMortgaged: false)
+                            viewModel.addProperty(newProperty)
                         }
-
                         presentationMode.wrappedValue.dismiss()
                     }
                     .disabled(!isFormValid)
@@ -91,6 +94,6 @@ struct ManagePropertyView: View {
 
 struct ManagePropertyView_Previews: PreviewProvider {
     static var previews: some View {
-        ManagePropertyView(viewModel: GameViewModel(game: Game(players: [], properties: [])))
+        ManagePropertyView(viewModel: GameViewModel(game: Game.sampleGame))
     }
 }

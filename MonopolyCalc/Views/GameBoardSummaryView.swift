@@ -6,43 +6,41 @@ struct GameBoardSummaryView: View {
     @State private var showEndGameAlert = false
     @State private var selectedFilter: FilterType = .none
     @State private var sortOrder: SortOrder = .name
-    @State private var selectedColor: PropertyColor? = nil
+    @State private var selectedGroup: PropertyGroup? = nil
     @State private var showingManagePropertySheet = false
     @State private var showingFilterSheet = false
     @State private var showingSortSheet = false
     @State private var navigationPath = NavigationPath()
 
     enum FilterType {
-        case none, owned, unowned, mortgaged, monopoly
+        case none, owned, unowned, mortgaged
     }
 
     enum SortOrder {
         case name, value
     }
 
-    var groupedProperties: [PropertyColor: [Property]] {
-        Dictionary(grouping: filteredAndSortedProperties, by: { $0.color })
+    var groupedProperties: [PropertyGroup: [Property]] {
+        Dictionary(grouping: filteredAndSortedProperties, by: { $0.group })
     }
 
     var filteredAndSortedProperties: [Property] {
-        var properties = viewModel.game.properties
+        var properties = viewModel.allPropertiesWithOwnership
 
         // Filtering
         switch selectedFilter {
         case .owned:
-            properties = properties.filter { $0.ownerId != nil }
+            properties = properties.filter { $0.isOwned }
         case .unowned:
-            properties = properties.filter { $0.ownerId == nil }
+            properties = properties.filter { !$0.isOwned }
         case .mortgaged:
             properties = properties.filter { $0.isMortgaged }
-        case .monopoly:
-            properties = properties.filter { $0.isMonopoly }
         case .none:
             break
         }
 
-        if let color = selectedColor {
-            properties = properties.filter { $0.color == color }
+        if let group = selectedGroup {
+            properties = properties.filter { $0.group == group }
         }
 
         // Sorting
@@ -50,12 +48,12 @@ struct GameBoardSummaryView: View {
         case .name:
             properties.sort { $0.name < $1.name }
         case .value:
-            properties.sort { $0.value > $1.value }
+            properties.sort { $0.originalValue > $1.originalValue }
         }
 
         // Search
         if !searchText.isEmpty {
-            properties = properties.filter { $0.name.localizedCaseInsensitiveContains(searchText) || (viewModel.owner(for: $0)?.name.localizedCaseInsensitiveContains(searchText) ?? false) }
+            properties = properties.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
 
         return properties
@@ -98,31 +96,24 @@ struct GameBoardSummaryView: View {
                             CapsuleButton(label: "Mortgaged", isSelected: selectedFilter == .mortgaged, action: {
                                 selectedFilter = selectedFilter == .mortgaged ? .none : .mortgaged
                             })
-                            CapsuleButton(label: "Monopoly", isSelected: selectedFilter == .monopoly, action: {
-                                selectedFilter = selectedFilter == .monopoly ? .none : .monopoly
-                            })
                         }
                         .padding(.horizontal)
                     }
 
                     ScrollView {
-                        ForEach(groupedProperties.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { color in
+                        ForEach(groupedProperties.keys.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { group in
                             VStack(alignment: .leading) {
                                 HStack {
-                                    Rectangle()
-                                        .fill(color.color)
-                                        .frame(width: 12, height: 24)
-                                        .cornerRadius(4)
-                                    Text(color.rawValue.capitalized)
+                                    Text(group.rawValue.capitalized)
                                         .font(.title2)
                                         .fontWeight(.bold)
                                         .foregroundColor(.white)
                                 }
                                 .padding(.leading)
 
-                                ForEach(groupedProperties[color]!) { property in
+                                ForEach(groupedProperties[group]!) { property in
                                     NavigationLink(value: property) {
-                                        PropertyRowView(property: property, ownerName: viewModel.owner(for: property)?.name)
+                                        PropertyRowView(property: property)
                                             .padding(.horizontal)
                                     }
                                     .buttonStyle(PlainButtonStyle())
@@ -170,16 +161,16 @@ struct GameBoardSummaryView: View {
             }
             .navigationBarHidden(true)
             .navigationDestination(for: Property.self) { property in
-                PropertyDetailView(viewModel: viewModel, property: property)
+                PropertyDetailView(property: property, viewModel: viewModel)
             }
-            .navigationDestination(isPresented: .constant(navigationPath.count > 0 && navigationPath.first is GameViewModel)) {
-                EndGameView(viewModel: viewModel)
+            .navigationDestination(for: GameViewModel.self) { viewModel in
+                EndGameView(winner: viewModel.calculateWinner())
             }
             .sheet(isPresented: $showingManagePropertySheet) {
                 ManagePropertyView(viewModel: viewModel)
             }
             .sheet(isPresented: $showingFilterSheet) {
-                FilterView(selectedFilter: $selectedFilter, selectedColor: $selectedColor)
+                FilterView(selectedFilter: $selectedFilter, selectedGroup: $selectedGroup)
             }
             .sheet(isPresented: $showingSortSheet) {
                 SortView(sortOrder: $sortOrder)

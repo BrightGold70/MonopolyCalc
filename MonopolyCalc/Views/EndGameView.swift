@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct EndGameView: View {
-    @ObservedObject var viewModel: GameViewModel
+    var winner: Player?
 
     var body: some View {
         VStack {
-            if let winner = viewModel.calculateWinner() {
+            if let winner = winner {
                 Text("Congratulations!")
                     .font(.largeTitle)
                     .fontWeight(.bold)
@@ -23,8 +23,6 @@ struct EndGameView: View {
 
 struct EndGameView_Previews: PreviewProvider {
     static var previews: some View {
-        EndGameView(viewModel: GameViewModel(game: Game(players: [
-            Player(name: "Player 1", avatar: "player1", cash: 1500, properties: [])
-        ], properties: [])))
+        EndGameView(winner: Player(name: "Player 1", avatar: "player1", cash: 1500, properties: []))
     }
 }
