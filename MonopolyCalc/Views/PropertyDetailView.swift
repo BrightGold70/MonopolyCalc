@@ -1,7 +1,8 @@
 import SwiftUI
+import SwiftData
 
 struct PropertyDetailView: View {
-    let property: Property
+    @State var property: Property
     @ObservedObject var viewModel: GameViewModel
     @State private var showingEditSheet = false
 
@@ -10,7 +11,7 @@ struct PropertyDetailView: View {
             Section(header: Text("Property Details")) {
                 Text("Name: \(property.name)")
                 Text("Value: $\(property.originalValue, specifier: "%.2f")")
-                Text("Owner: \(property.isOwned ? "Owned" : "Unowned")")
+                Text("Owner: \(viewModel.getOwner(of: property)?.name ?? "Unowned")")
             }
 
             Section(header: Text("Development")) {
@@ -29,7 +30,7 @@ struct PropertyDetailView: View {
             showingEditSheet = true
         })
         .sheet(isPresented: $showingEditSheet) {
-            ManagePropertyView(viewModel: viewModel, propertyToEdit: property)
+            EditPropertyStateView(viewModel: viewModel, property: $property)
         }
     }
 }

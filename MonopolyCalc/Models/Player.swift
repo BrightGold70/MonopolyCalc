@@ -15,7 +15,4 @@ final class Player: Identifiable {
         self.properties = properties
     }
 
-    var netWorth: Double {
-        properties.reduce(money) { $0 + $1.originalValue }
-    }
 }

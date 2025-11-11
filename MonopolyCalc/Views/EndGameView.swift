@@ -1,17 +1,18 @@
 import SwiftUI
+import SwiftData
 
 struct EndGameView: View {
-    var winner: Player?
+    @ObservedObject var viewModel: GameViewModel
 
     var body: some View {
         VStack {
-            if let winner = winner {
+            if let winner = viewModel.calculateWinner() {
                 Text("Congratulations!")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 Text("\(winner.name) is the winner!")
                     .font(.title)
-                Text("Net Worth: $\(winner.netWorth)")
+                Text("Net Worth: $\(viewModel.calculateNetWorth(for: winner), specifier: "%.2f")")
                     .font(.title2)
             } else {
                 Text("No winner could be determined.")
@@ -23,6 +24,10 @@ struct EndGameView: View {
 
 struct EndGameView_Previews: PreviewProvider {
     static var previews: some View {
-        EndGameView(winner: Player(name: "Player 1", avatar: "player1", cash: 1500, properties: []))
+        let modelContainer = try! ModelContainer(for: GameRecord.self, PlayerProfile.self, PropertySet.self)
+        let game = Game.sampleGame
+        let viewModel = GameViewModel(game: game, modelContext: modelContainer.mainContext)
+        EndGameView(viewModel: viewModel)
+            .modelContainer(modelContainer)
     }
 }

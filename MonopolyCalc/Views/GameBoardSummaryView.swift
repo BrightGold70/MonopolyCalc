@@ -166,7 +166,7 @@ struct GameBoardSummaryView: View {
                 PropertyDetailView(property: property, viewModel: viewModel)
             }
             .navigationDestination(for: GameViewModel.self) { viewModel in
-                EndGameView(winner: viewModel.calculateWinner())
+                EndGameView(viewModel: viewModel)
             }
             .sheet(isPresented: $showingManagePropertySheet) {
                 ManagePropertyView(viewModel: viewModel)
