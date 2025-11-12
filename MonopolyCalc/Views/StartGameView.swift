@@ -6,6 +6,7 @@ struct StartGameView: View {
     @StateObject private var viewModel: StartGameViewModel
     @State private var isGameStarted = false
     @State private var showingCreatePlayerSheet = false
+    @State private var showingManagePlayersSheet = false
 
     init(modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: StartGameViewModel(modelContext: modelContext))
@@ -17,7 +18,9 @@ struct StartGameView: View {
                 Color.backgroundDark.edgesIgnoringSafeArea(.all)
 
                 VStack(spacing: 0) {
-                    HeaderView()
+                    HeaderView {
+                        showingManagePlayersSheet = true
+                    }
 
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
@@ -55,6 +58,9 @@ struct StartGameView: View {
                     showingCreatePlayerSheet = false
                 }
             }
+            .sheet(isPresented: $showingManagePlayersSheet) {
+                ManagePlayersView(modelContext: modelContext)
+            }
             .preferredColorScheme(.dark)
         }
         .onAppear {
@@ -66,6 +72,8 @@ struct StartGameView: View {
 // MARK: - Subviews
 
 private struct HeaderView: View {
+    var onManagePlayers: () -> Void
+
     var body: some View {
         HStack {
             Button(action: {}) {
@@ -83,7 +91,12 @@ private struct HeaderView: View {
 
             Spacer()
 
-            Spacer().frame(width: 40, height: 40)
+            Button(action: onManagePlayers) {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.textDark)
+            }
+            .frame(width: 40, height: 40)
         }
         .padding(.horizontal)
         .padding(.bottom, 8)
@@ -431,44 +444,6 @@ private struct CustomTextField: View {
         .frame(height: 60)
         .background(Color.black.opacity(0.2))
         .cornerRadius(12)
-    }
-}
-
-struct CreatePlayerView: View {
-    @Environment(\.presentationMode) var presentationMode
-
-    @State private var name = ""
-    @State private var selectedIcon = "person.fill"
-    let icons = ["person.fill", "person.2.fill", "person.3.fill", "car.fill", "airplane", "tram.fill"]
-
-    var onSave: (String, String) -> Void
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Player Details")) {
-                    TextField("Name", text: $name)
-
-                    Picker("Icon", selection: $selectedIcon) {
-                        ForEach(icons, id: \.self) { icon in
-                            Image(systemName: icon).tag(icon)
-                        }
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                }
-
-                Section {
-                    Button("Save") {
-                        onSave(name, selectedIcon)
-                    }
-                    .disabled(name.isEmpty)
-                }
-            }
-            .navigationTitle("New Player")
-            .navigationBarItems(trailing: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
-            })
-        }
     }
 }
 

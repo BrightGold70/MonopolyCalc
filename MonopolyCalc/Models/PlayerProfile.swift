@@ -18,11 +18,11 @@ final class PlayerProfile {
 
 extension PlayerProfile {
     static let samplePlayers = [
-        PlayerProfile(name: "Alice", icon: "cruelty_free", gamesPlayed: 3),
-        PlayerProfile(name: "Bob", icon: "directions_car", gamesPlayed: 10),
-        PlayerProfile(name: "Charlie", icon: "pets", gamesPlayed: 5),
-        PlayerProfile(name: "David", icon: "rocket_launch", gamesPlayed: 1),
-        PlayerProfile(name: "Eva", icon: "stadia_controller", gamesPlayed: 0),
-        PlayerProfile(name: "Frank", icon: "joystick", gamesPlayed: 5)
+        PlayerProfile(name: "Alice", icon: "hare.fill", gamesPlayed: 3),
+        PlayerProfile(name: "Bob", icon: "car.fill", gamesPlayed: 10),
+        PlayerProfile(name: "Charlie", icon: "dog.fill", gamesPlayed: 5),
+        PlayerProfile(name: "David", icon: "airplane", gamesPlayed: 1),
+        PlayerProfile(name: "Eva", icon: "gamecontroller.fill", gamesPlayed: 0),
+        PlayerProfile(name: "Frank", icon: "joystick.fill", gamesPlayed: 5)
     ]
 }

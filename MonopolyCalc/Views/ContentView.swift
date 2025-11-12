@@ -1,7 +1,10 @@
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var players: [PlayerProfile]
+    @State private var showingPlayerManagement = false
 
     var body: some View {
         TabView {
@@ -16,6 +19,16 @@ struct ContentView: View {
                 }
         }
         .preferredColorScheme(.dark)
+        .onAppear(perform: checkPlayerCount)
+        .fullScreenCover(isPresented: $showingPlayerManagement) {
+            ManagePlayersView(modelContext: modelContext)
+        }
+    }
+
+    private func checkPlayerCount() {
+        if players.count < 2 {
+            showingPlayerManagement = true
+        }
     }
 }
 
