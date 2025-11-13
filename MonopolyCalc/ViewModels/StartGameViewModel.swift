@@ -150,4 +150,52 @@ class StartGameViewModel: ObservableObject {
 
         return Game(players: players, properties: gameProperties)
     }
+
+    func loadGame(from savedGame: SavedGame) -> Game? {
+        // Create the active game players from the saved data
+        let players = savedGame.players.map { savedPlayer in
+            Player(name: savedPlayer.name, money: savedPlayer.money, properties: [])
+        }
+
+        // Create the active game properties from the saved data
+        let properties = savedGame.properties.map { savedProperty in
+            Property(
+                name: savedProperty.name,
+                originalValue: savedProperty.originalValue,
+                houses: savedProperty.houses,
+                costOfHouse: savedProperty.costOfHouse,
+                hotels: savedProperty.hotels,
+                costOfHotel: savedProperty.costOfHotel,
+                isOwned: savedProperty.isOwned,
+                index: savedProperty.index,
+                color: savedProperty.color,
+                group: savedProperty.group,
+                bonus: savedProperty.bonus,
+                isMortgaged: savedProperty.isMortgaged
+            )
+        }
+
+        var game = Game(players: players, properties: properties)
+
+        // Now that all players and properties are created, we can link them.
+        // First, assign owners to properties.
+        for i in 0..<game.properties.count {
+            let savedProperty = savedGame.properties[i]
+            if savedProperty.isOwned, let ownerName = savedProperty.ownerName {
+                if let owner = game.players.first(where: { $0.name == ownerName }) {
+                    game.properties[i].owner = owner
+                }
+            }
+        }
+
+        // Then, assign properties to players.
+        for (index, savedPlayer) in savedGame.players.enumerated() {
+            let playerProperties = savedPlayer.propertyNames.compactMap { propertyName in
+                game.properties.first { $0.name == propertyName }
+            }
+            game.players[index].properties = playerProperties
+        }
+
+        return game
+    }
 }

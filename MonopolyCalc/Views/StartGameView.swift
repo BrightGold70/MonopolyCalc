@@ -6,6 +6,8 @@ struct StartGameView: View {
     @StateObject private var viewModel: StartGameViewModel
     @Binding var selectedTab: String
 
+    @State private var gameToLoad: Game?
+    @State private var showingLoadGameSheet = false
     @State private var isGameStarted = false
     @State private var showingCreatePlayerSheet = false
     @State private var showingManagePlayersSheet = false
@@ -22,9 +24,7 @@ struct StartGameView: View {
                 Color.backgroundDark.edgesIgnoringSafeArea(.all)
 
                 VStack(spacing: 0) {
-                    HeaderView {
-                        showingManagePlayersSheet = true
-                    }
+                    HeaderView(onManagePlayers: { showingManagePlayersSheet = true })
 
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
@@ -46,24 +46,32 @@ struct StartGameView: View {
                     playerCount: viewModel.selectedPlayers.count,
                     onStartGame: {
                         if !viewModel.selectedPlayers.isEmpty {
+                            gameToLoad = viewModel.createGame()
                             isGameStarted = true
                         }
-                    }
+                    },
+                    onLoadGame: { showingLoadGameSheet = true }
                 )
             }
             .navigationDestination(isPresented: $isGameStarted) {
-                if let game = viewModel.createGame() {
+                if let game = gameToLoad {
                     GameBoardSummaryView(viewModel: GameViewModel(game: game, modelContext: modelContext), selectedTab: $selectedTab)
                 }
             }
             .sheet(isPresented: $showingCreatePlayerSheet) {
                 CreatePlayerView { name, icon in
                     viewModel.createNewPlayer(name: name, icon: icon)
-                    showingCreatePlayerSheet = false
                 }
             }
             .sheet(isPresented: $showingManagePlayersSheet) {
                 ManagePlayersView(modelContext: modelContext)
+            }
+            .sheet(isPresented: $showingLoadGameSheet) {
+                LoadGameView { savedGame in
+                    gameToLoad = viewModel.loadGame(from: savedGame)
+                    isGameStarted = true
+                    showingLoadGameSheet = false
+                }
             }
             .textFieldAlert(isShowing: $showingSaveTemplateAlert, title: "Save Template") { name in
                 viewModel.saveTemplate(name: name)
@@ -369,6 +377,7 @@ private struct PlayerRow: View {
 private struct BottomBarView: View {
     let playerCount: Int
     let onStartGame: () -> Void
+    let onLoadGame: () -> Void
 
     var body: some View {
         VStack {
@@ -388,8 +397,8 @@ private struct BottomBarView: View {
                 }
                 .disabled(playerCount == 0)
 
-                Button(action: {}) {
-                    Image(systemName: "sparkles")
+                Button(action: onLoadGame) {
+                    Image(systemName: "tray.and.arrow.down.fill")
                         .frame(width: 56, height: 56)
                         .background(Color.primary.opacity(0.2))
                         .foregroundColor(.primary)

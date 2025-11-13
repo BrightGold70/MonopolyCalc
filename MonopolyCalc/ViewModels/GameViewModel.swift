@@ -23,14 +23,7 @@ class GameViewModel: ObservableObject, Hashable {
     }
 
     var allPropertiesWithOwnership: [Property] {
-        var properties = game.properties
-        for (index, property) in properties.enumerated() {
-            let isOwnedByanyPlayer = game.players.contains { player in
-                player.properties.contains { $0.id == property.id }
-            }
-            properties[index].isOwned = isOwnedByanyPlayer
-        }
-        return properties
+        return game.properties
     }
 
     func calculateScoreBreakdown(for player: Player) -> (cash: Double, propertyValue: Double, buildingValue: Double, netWorth: Double) {
@@ -98,19 +91,23 @@ class GameViewModel: ObservableObject, Hashable {
     }
 
     func updatePropertyOwner(for property: Property, newOwner: Player?) {
-        for player in game.players {
-            player.properties.removeAll { $0.id == property.id }
+        // Remove property from the old owner's list
+        if let oldOwner = property.owner {
+            oldOwner.properties.removeAll { $0.id == property.id }
         }
 
-        if let newOwner = newOwner, let playerIndex = game.players.firstIndex(where: { $0.id == newOwner.id }) {
-            game.players[playerIndex].properties.append(property)
-        }
+        // Set the new owner on the property
+        property.owner = newOwner
+        property.isOwned = newOwner != nil
+
+        // Add property to the new owner's list
+        newOwner?.properties.append(property)
 
         updateProperty(property)
     }
 
     func getOwner(of property: Property) -> Player? {
-        return game.players.first(where: { $0.properties.contains(where: { $0.id == property.id }) })
+        return property.owner
     }
 
     func saveGameRecord() {
@@ -121,6 +118,37 @@ class GameViewModel: ObservableObject, Hashable {
 
         let gameRecord = GameRecord(date: Date(), scores: scores)
         modelContext.insert(gameRecord)
+    }
+
+    func saveInProgressGame() {
+        let savedPlayers = game.players.map { player in
+            SavedPlayer(
+                name: player.name,
+                money: player.money,
+                propertyNames: player.properties.map { $0.name }
+            )
+        }
+
+        let savedProperties = game.properties.map { property in
+            SavedProperty(
+                name: property.name,
+                isOwned: property.isOwned,
+                ownerName: getOwner(of: property)?.name,
+                houses: property.houses,
+                hotels: property.hotels,
+                isMortgaged: property.isMortgaged,
+                originalValue: property.originalValue,
+                costOfHouse: property.costOfHouse,
+                costOfHotel: property.costOfHotel,
+                index: property.index,
+                color: property.color,
+                group: property.group,
+                bonus: property.bonus
+            )
+        }
+
+        let savedGame = SavedGame(date: Date(), players: savedPlayers, properties: savedProperties)
+        modelContext.insert(savedGame)
     }
 
     static func == (lhs: GameViewModel, rhs: GameViewModel) -> Bool {

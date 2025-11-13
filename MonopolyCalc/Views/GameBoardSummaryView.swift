@@ -115,7 +115,10 @@ struct GameBoardSummaryView: View {
                 }
 
                 BottomNavBar(
-                    onManageProperty: { showingManagePropertySheet = true },
+                    onSave: {
+                        viewModel.saveInProgressGame()
+                        presentationMode.wrappedValue.dismiss()
+                    },
                     onEndGame: { showEndGameAlert = true }
                 )
             }
@@ -196,17 +199,17 @@ private struct CapsuleButton: View {
 }
 
 private struct BottomNavBar: View {
-    var onManageProperty: () -> Void
+    var onSave: () -> Void
     var onEndGame: () -> Void
 
     var body: some View {
         VStack {
             Spacer()
             HStack {
-                Button(action: onManageProperty) {
+                Button(action: onSave) {
                     HStack {
-                        Image(systemName: "square.and.pencil")
-                        Text("Manage Property")
+                        Image(systemName: "square.and.arrow.down")
+                        Text("Save & Exit")
                     }
                     .frame(maxWidth: .infinity).padding()
                     .background(Color.primary).foregroundColor(.backgroundDark)
