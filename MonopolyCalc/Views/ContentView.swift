@@ -9,7 +9,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            GameRecordView()
+            GameRecordView(modelContext: modelContext)
                 .tabItem {
                     Label("Records", systemImage: "list.bullet")
                 }

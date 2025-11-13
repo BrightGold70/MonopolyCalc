@@ -114,8 +114,12 @@ class GameViewModel: ObservableObject, Hashable {
     }
 
     func saveGameRecord() {
-        let winner = calculateWinner()
-        let gameRecord = GameRecord(date: Date(), players: game.players, winner: winner)
+        let scores = game.players.map { player -> PlayerScore in
+            let netWorth = calculateScoreBreakdown(for: player).netWorth
+            return PlayerScore(playerName: player.name, netWorth: netWorth)
+        }
+
+        let gameRecord = GameRecord(date: Date(), scores: scores)
         modelContext.insert(gameRecord)
     }
 

@@ -9,6 +9,7 @@ struct MonopolyCalcApp: App {
             PlayerProfile.self,
             PropertySet.self,
             GameSetupTemplate.self,
+            PlayerScore.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
