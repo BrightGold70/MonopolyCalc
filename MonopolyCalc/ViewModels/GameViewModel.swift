@@ -2,6 +2,15 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+struct PlayerRanking: Identifiable {
+    let id: UUID
+    let name: String
+    let netWorth: Double
+    let cash: Double
+    let propertyValue: Double
+    let buildingValue: Double
+}
+
 @MainActor
 class GameViewModel: ObservableObject, Hashable {
     let id = UUID()
@@ -24,28 +33,45 @@ class GameViewModel: ObservableObject, Hashable {
         return properties
     }
 
-    func calculateNetWorth(for player: Player) -> Double {
-        var netWorth = player.money
+    func calculateScoreBreakdown(for player: Player) -> (cash: Double, propertyValue: Double, buildingValue: Double, netWorth: Double) {
+        let cash = player.money
+        var propertyValue: Double = 0
+        var buildingValue: Double = 0
 
         for property in player.properties {
-            var propertyValue = property.originalValue
+            var currentPropertyValue = property.originalValue
 
-            // Double value for monopolies
             if hasMonopoly(for: property.group, ownedBy: player) {
-                propertyValue *= 2
+                currentPropertyValue *= 2
             }
 
-            // 10% value for mortgaged properties
-            if property.isMortged {
-                propertyValue *= 0.1
+            if property.isMortgaged {
+                currentPropertyValue *= 0.1
             }
 
-            netWorth += propertyValue
-            netWorth += Double(property.houses) * property.costOfHouse
-            netWorth += Double(property.hotels) * property.costOfHotel
+            propertyValue += currentPropertyValue
+            buildingValue += Double(property.houses) * property.costOfHouse
+            buildingValue += Double(property.hotels) * property.costOfHotel
         }
 
-        return netWorth
+        let netWorth = cash + propertyValue + buildingValue
+        return (cash, propertyValue, buildingValue, netWorth)
+    }
+
+    func getPlayerRankings() -> [PlayerRanking] {
+        return game.players
+            .map { player in
+                let breakdown = calculateScoreBreakdown(for: player)
+                return PlayerRanking(
+                    id: player.id,
+                    name: player.name,
+                    netWorth: breakdown.netWorth,
+                    cash: breakdown.cash,
+                    propertyValue: breakdown.propertyValue,
+                    buildingValue: breakdown.buildingValue
+                )
+            }
+            .sorted { $0.netWorth > $1.netWorth }
     }
 
     private func hasMonopoly(for group: PropertyGroup?, ownedBy player: Player) -> Bool {
@@ -54,11 +80,11 @@ class GameViewModel: ObservableObject, Hashable {
         let allPropertiesInGroup = game.properties.filter { $0.group == group }
         let playerPropertiesInGroup = player.properties.filter { $0.group == group }
 
-        return allPropertiesInGroup.count == playerPropertiesInGroup.count
+        return !allPropertiesInGroup.isEmpty && allPropertiesInGroup.count == playerPropertiesInGroup.count
     }
 
     func calculateWinner() -> Player? {
-        game.players.max(by: { calculateNetWorth(for: $0) < calculateNetWorth(for: $1) })
+        game.players.max(by: { calculateScoreBreakdown(for: $0).netWorth < calculateScoreBreakdown(for: $1).netWorth })
     }
 
     func addProperty(_ property: Property) {
@@ -72,16 +98,12 @@ class GameViewModel: ObservableObject, Hashable {
     }
 
     func updatePropertyOwner(for property: Property, newOwner: Player?) {
-        // Remove property from all players first
         for player in game.players {
             player.properties.removeAll { $0.id == property.id }
         }
 
-        // Add to the new owner if one is selected
-        if let newOwner = newOwner {
-            if let playerIndex = game.players.firstIndex(where: { $0.id == newOwner.id }) {
-                game.players[playerIndex].properties.append(property)
-            }
+        if let newOwner = newOwner, let playerIndex = game.players.firstIndex(where: { $0.id == newOwner.id }) {
+            game.players[playerIndex].properties.append(property)
         }
 
         updateProperty(property)

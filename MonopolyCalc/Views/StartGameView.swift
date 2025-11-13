@@ -4,12 +4,15 @@ import SwiftData
 struct StartGameView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel: StartGameViewModel
+    @Binding var selectedTab: String
+
     @State private var isGameStarted = false
     @State private var showingCreatePlayerSheet = false
     @State private var showingManagePlayersSheet = false
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, selectedTab: Binding<String>) {
         _viewModel = StateObject(wrappedValue: StartGameViewModel(modelContext: modelContext))
+        _selectedTab = selectedTab
     }
 
     var body: some View {
@@ -49,7 +52,7 @@ struct StartGameView: View {
             }
             .navigationDestination(isPresented: $isGameStarted) {
                 if let game = viewModel.createGame() {
-                    GameBoardSummaryView(viewModel: GameViewModel(game: game, modelContext: modelContext))
+                    GameBoardSummaryView(viewModel: GameViewModel(game: game, modelContext: modelContext), selectedTab: $selectedTab)
                 }
             }
             .sheet(isPresented: $showingCreatePlayerSheet) {
@@ -451,6 +454,6 @@ private struct CustomTextField: View {
 
 struct StartGameView_Previews: PreviewProvider {
     static var previews: some View {
-        StartGameView(modelContext: try! ModelContainer(for: [PlayerProfile.self, PropertySet.self]).mainContext)
+        StartGameView(modelContext: try! ModelContainer(for: [PlayerProfile.self, PropertySet.self]).mainContext, selectedTab: .constant("New Game"))
     }
 }
