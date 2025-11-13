@@ -9,6 +9,7 @@ struct StartGameView: View {
     @State private var isGameStarted = false
     @State private var showingCreatePlayerSheet = false
     @State private var showingManagePlayersSheet = false
+    @State private var showingSaveTemplateAlert = false
 
     init(modelContext: ModelContext, selectedTab: Binding<String>) {
         _viewModel = StateObject(wrappedValue: StartGameViewModel(modelContext: modelContext))
@@ -28,7 +29,7 @@ struct StartGameView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
                             InstructionsView()
-                            GameSetupTemplateView()
+                            GameSetupTemplateView(viewModel: viewModel, onSave: { showingSaveTemplateAlert = true })
                             StartingCashView(startingCash: $viewModel.startingCash)
                             if let selectedSet = viewModel.selectedPropertySet {
                                 PropertySetView(selectedSet: .constant(selectedSet), sets: viewModel.propertySets)
@@ -63,6 +64,9 @@ struct StartGameView: View {
             }
             .sheet(isPresented: $showingManagePlayersSheet) {
                 ManagePlayersView(modelContext: modelContext)
+            }
+            .textFieldAlert(isShowing: $showingSaveTemplateAlert, title: "Save Template") { name in
+                viewModel.saveTemplate(name: name)
             }
             .preferredColorScheme(.dark)
         }
@@ -119,6 +123,9 @@ private struct InstructionsView: View {
 }
 
 private struct GameSetupTemplateView: View {
+    @ObservedObject var viewModel: StartGameViewModel
+    var onSave: () -> Void
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -126,7 +133,7 @@ private struct GameSetupTemplateView: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.textDark)
                 Spacer()
-                Button(action: {}) {
+                Button(action: onSave) {
                     HStack(spacing: 4) {
                         Image(systemName: "bookmark")
                         Text("Save Current")
@@ -136,11 +143,21 @@ private struct GameSetupTemplateView: View {
                 }
             }
 
-            CustomPicker(
-                icon: "tag",
-                options: ["Custom Setup", "Family Game Night", "Quick Match"],
-                selection: .constant("Custom Setup")
-            )
+            Picker("Template", selection: $viewModel.selectedTemplateID) {
+                Text("Custom Setup").tag(nil as UUID?)
+                ForEach(viewModel.templates) { template in
+                    Text(template.name).tag(template.id as UUID?)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .accentColor(.textDark)
+            .padding(.horizontal)
+            .frame(height: 60)
+            .background(Color.black.opacity(0.2))
+            .cornerRadius(12)
+            .onChange(of: viewModel.selectedTemplateID) {
+                viewModel.loadTemplate(id: viewModel.selectedTemplateID)
+            }
         }
     }
 }
@@ -454,6 +471,6 @@ private struct CustomTextField: View {
 
 struct StartGameView_Previews: PreviewProvider {
     static var previews: some View {
-        StartGameView(modelContext: try! ModelContainer(for: [PlayerProfile.self, PropertySet.self]).mainContext, selectedTab: .constant("New Game"))
+        StartGameView(modelContext: try! ModelContainer(for: [PlayerProfile.self, PropertySet.self, GameSetupTemplate.self]).mainContext, selectedTab: .constant("New Game"))
     }
 }
